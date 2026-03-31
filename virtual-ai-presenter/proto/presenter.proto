@@ -1,0 +1,56 @@
+syntax = "proto3";
+package presenter;
+
+option java_multiple_files = true;
+option java_package = "com.virtualai.presenter";
+
+message StartSessionRequest {
+  string user_id = 1;
+  string model_preset = 2;
+}
+message StartSessionResponse {
+  string session_id = 1;
+  string ws_url = 2;
+}
+
+message SubmitScriptRequest {
+  string session_id = 1;
+  string theme = 2;
+  string script = 3;
+  string voice = 4;
+}
+
+message ControlRequest {
+  string session_id = 1;
+  string command = 2; // pause|resume|stop|seek
+  int32 seek_ms = 3;
+}
+
+message LMPartial {
+  string text_chunk = 1;
+  bool done = 2;
+}
+
+message TTSAudioChunk {
+  bytes chunk = 1;
+  int64 seq = 2;
+}
+
+message VisemeEvent {
+  string phoneme = 1;
+  int64 start_ms = 2;
+  int64 end_ms = 3;
+}
+
+message MetaEnd {
+  string recording_url = 1;
+  string transcript = 2;
+}
+
+service Presenter {
+  rpc StartSession(StartSessionRequest) returns (StartSessionResponse);
+  rpc SubmitScript(SubmitScriptRequest) returns (google.protobuf.Empty);
+  rpc Control(ControlRequest) returns (google.protobuf.Empty);
+  // Server-side streaming of events: LM partials, TTS chunks, visemes, meta
+  rpc StreamEvents(StartSessionRequest) returns (stream google.protobuf.Any);
+}
