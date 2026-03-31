@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: Virtual AI Presenter API
+  version: "1.0.0"
+servers:
+  - url: https://api.example.com/v1
+paths:
+  /session/start:
+    post:
+      summary: Start a new session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSessionRequest'
+      responses:
+        '200':
+          description: session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartSessionResponse'
+  /session/{sessionId}/submit:
+    post:
+      summary: Submit theme or script
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitScriptRequest'
+      responses:
+        '202':
+          description: accepted, processing
+  /session/{sessionId}/control:
+    post:
+      summary: control playback
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlRequest'
+      responses:
+        '200':
+          description: control accepted
+  /media/{mediaId}:
+    get:
+      summary: download rendered media
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: media file
+components:
+  schemas:
+    StartSessionRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        modelPreset:
+          type: string
+      required: [userId]
+    StartSessionResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        websocketUrl:
+          type: string
+    SubmitScriptRequest:
+      type: object
+      properties:
+        theme:
+          type: string
+        script:
+          type: string
+        voice:
+          type: object
+          properties:
+            name:
+              type: string
+            emotion:
+              type: string
+            speed:
+              type: number
+    ControlRequest:
+      type: object
+      properties:
+        command:
+          type: string
+          enum: [pause, resume, stop, seek]
+        seekMs:
+          type: integer
