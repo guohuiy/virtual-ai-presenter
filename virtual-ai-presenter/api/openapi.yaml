@@ -1,75 +1,15 @@
 openapi: 3.0.3
 info:
   title: Virtual AI Presenter API
-  version: "1.0.0"
+  version: "1.0.1"
 servers:
   - url: https://api.example.com/v1
-paths:
-  /session/start:
-    post:
-      summary: Start a new session
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartSessionRequest'
-      responses:
-        '200':
-          description: session started
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StartSessionResponse'
-  /session/{sessionId}/submit:
-    post:
-      summary: Submit theme or script
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubmitScriptRequest'
-      responses:
-        '202':
-          description: accepted, processing
-  /session/{sessionId}/control:
-    post:
-      summary: control playback
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ControlRequest'
-      responses:
-        '200':
-          description: control accepted
-  /media/{mediaId}:
-    get:
-      summary: download rendered media
-      parameters:
-        - name: mediaId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: media file
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     StartSessionRequest:
       type: object
@@ -110,3 +50,114 @@ components:
           enum: [pause, resume, stop, seek]
         seekMs:
           type: integer
+    LMPartial:
+      type: object
+      properties:
+        textChunk:
+          type: string
+        done:
+          type: boolean
+    TTSAudioChunk:
+      type: object
+      properties:
+        seq:
+          type: integer
+        chunkBase64:
+          type: string
+          description: base64-encoded audio bytes (e.g., opus or PCM16)
+    VisemeEvent:
+      type: object
+      properties:
+        phoneme:
+          type: string
+        startMs:
+          type: integer
+        endMs:
+          type: integer
+    MetaEnd:
+      type: object
+      properties:
+        recordingUrl:
+          type: string
+        transcript:
+          type: string
+security:
+  - bearerAuth: []
+paths:
+  /session/start:
+    post:
+      summary: Start a new session (returns session id + websocket URL)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSessionRequest'
+      responses:
+        '200':
+          description: session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartSessionResponse'
+  /session/{sessionId}/submit:
+    post:
+      summary: Submit theme or script
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitScriptRequest'
+      responses:
+        '202':
+          description: accepted, processing
+  /session/{sessionId}/control:
+    post:
+      summary: control playback
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlRequest'
+      responses:
+        '200':
+          description: control accepted
+  /media/{mediaId}:
+    get:
+      summary: download rendered media
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: media file
+
+# Notes:
+# - Real-time streaming (LM partials, audio chunks, viseme events) is delivered
+#   via the websocket URL returned in StartSessionResponse or via WebRTC.
+# - The websocket protocol exchanges JSON events matching the schemas above.
