@@ -1,0 +1,107 @@
+# Kubernetes deployment templates (minimal)
+# - Adjust image tags, resource limits, and secrets in real deployments.
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: ghcr.io/guohuiy/api-gateway:latest
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          ports:
+            - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: orchestrator
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: ghcr.io/guohuiy/orchestrator:latest
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          ports:
+            - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lm-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lm-inference
+  template:
+    metadata:
+      labels:
+        app: lm-inference
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-tesla-t4
+      containers:
+        - name: lm-inference
+          image: ghcr.io/guohuiy/lm-inference:latest
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: "16Gi"
+          ports:
+            - containerPort: 8500
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tts-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tts-service
+  template:
+    metadata:
+      labels:
+        app: tts-service
+    spec:
+      containers:
+        - name: tts-service
+          image: ghcr.io/guohuiy/tts-service:latest
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+          ports:
+            - containerPort: 9000
