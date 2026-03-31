@@ -1,9 +1,12 @@
 syntax = "proto3";
 package presenter;
 
+import "google/protobuf/empty.proto";
+
 option java_multiple_files = true;
 option java_package = "com.virtualai.presenter";
 
+// Session control messages
 message StartSessionRequest {
   string user_id = 1;
   string model_preset = 2;
@@ -26,13 +29,14 @@ message ControlRequest {
   int32 seek_ms = 3;
 }
 
+// Payloads for streaming events
 message LMPartial {
   string text_chunk = 1;
   bool done = 2;
 }
 
 message TTSAudioChunk {
-  bytes chunk = 1;
+  bytes chunk = 1; // raw audio bytes (e.g., PCM16/opus)
   int64 seq = 2;
 }
 
@@ -47,10 +51,23 @@ message MetaEnd {
   string transcript = 2;
 }
 
+// Unified event wrapper for server streaming
+message Event {
+  oneof payload {
+    LMPartial lm_partial = 1;
+    TTSAudioChunk tts_audio_chunk = 2;
+    VisemeEvent viseme = 3;
+    MetaEnd meta_end = 4;
+  }
+}
+
 service Presenter {
+  // Start session -> returns websocket URL for client (optional)
   rpc StartSession(StartSessionRequest) returns (StartSessionResponse);
+  // Submit script for processing (async)
   rpc SubmitScript(SubmitScriptRequest) returns (google.protobuf.Empty);
+  // Playback control
   rpc Control(ControlRequest) returns (google.protobuf.Empty);
-  // Server-side streaming of events: LM partials, TTS chunks, visemes, meta
-  rpc StreamEvents(StartSessionRequest) returns (stream google.protobuf.Any);
+  // Server-side streaming: a stream of Event messages (LM partials, audio chunks, visemes, meta)
+  rpc StreamEvents(StartSessionRequest) returns (stream Event);
 }
