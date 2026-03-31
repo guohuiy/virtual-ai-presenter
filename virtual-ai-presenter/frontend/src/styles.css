@@ -1,0 +1,8 @@
+html,body,#root { height: 100%; margin: 0; }
+body { font-family: Inter, Arial, sans-serif; }
+.app { display:flex; height:100vh; }
+.sidebar { width: 360px; padding: 16px; background: #fafafa; box-shadow: 2px 0 8px rgba(0,0,0,0.06); overflow:auto }
+.canvas { flex:1; }
+.toolbar input, .toolbar textarea, .toolbar select { width:100%; margin-top:6px; }
+button { margin-top:8px }
+.log { white-space: pre-wrap; font-size: 12px; margin-top: 12px; max-height: 200px; overflow:auto; }
