@@ -2,6 +2,17 @@
 # - Adjust image tags, resource limits, and secrets in real deployments.
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,6 +39,17 @@ spec:
               memory: "512Mi"
           ports:
             - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator
+spec:
+  selector:
+    app: orchestrator
+  ports:
+    - port: 80
+      targetPort: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -56,6 +78,36 @@ spec:
           ports:
             - containerPort: 8000
 ---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: orchestrator-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: orchestrator
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lm-inference
+spec:
+  selector:
+    app: lm-inference
+  ports:
+    - port: 8500
+      targetPort: 8500
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -82,6 +134,17 @@ spec:
           ports:
             - containerPort: 8500
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tts-service
+spec:
+  selector:
+    app: tts-service
+  ports:
+    - port: 9000
+      targetPort: 9000
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -105,3 +168,22 @@ spec:
               memory: "1Gi"
           ports:
             - containerPort: 9000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tts-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tts-service
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
