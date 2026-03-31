@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  orchestrator:
+    build: ./virtual-ai-presenter/backend/orchestrator
+    ports:
+      - "8000:8000"
+    depends_on:
+      - lm
+      - tts
+      - media
+  lm:
+    build: ./virtual-ai-presenter/backend/lm_inference
+    ports:
+      - "8501:8501"
+  tts:
+    build: ./virtual-ai-presenter/backend/tts_service
+    ports:
+      - "8601:8601"
+  media:
+    build: ./virtual-ai-presenter/backend/media_service
+    ports:
+      - "8701:8701"
