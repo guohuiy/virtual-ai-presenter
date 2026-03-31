@@ -16,6 +16,17 @@
 - Message Bus (Kafka/RabbitMQ)
 - Observability (Prometheus/Grafana, ELK/Loki)
 
+## Services & Responsibilities
+- `api-gateway`: HTTPS, JWT 验证、路由、限流、WebSocket 协议终端
+- `web-client`: 渲染 3D avatar，播放音频、接收 viseme/事件流
+- `orchestrator`: 处理用户请求，拆分任务，调用 LLM/TTS，管理会话状态
+- `lm-inference`: LLM 模型推理，支持流式输出和版本管理
+- `tts-service`: 文本到语音，返回流式音频与 viseme 时间戳
+- `animation-service`: 根据 viseme + 情绪映射前端动画指令或预渲染帧
+- `media-service`: 录制会话、生成下载链接、转码与存储
+- `assets-service`: 存储与版本化 3D 模型、表情与动作数据
+- `auth-service`: 用户认证、配额与付费集成
+
 ## Data Flow (simplified)
 1. 客户端通过 `api-gateway` 建立会话（WebSocket/WebRTC）。
 2. 提交主题/稿件到 `orchestrator`。
@@ -51,8 +62,14 @@
 - MVP-1: 文本输入 → LLM（或 Mock）→ TTS（预录/流）→ 前端播放 + 基本唇形同步
 - MVP-2: 流式播放 (WebRTC)、情绪/语速控制、录制导出
 
-## Next Steps
-- 明确 OpenAPI 契约（已添加 /api/openapi.yaml）
-- 明确内部 gRPC 接口（已添加 /proto/presenter.proto）
-- 提供 K8s 部署模板用于快速上云（已添加 /k8s/deployments.yaml）
+## Acceptance Checklist (for approval)
+- [ ] 服务清单与职责被确认
+- [ ] OpenAPI（外部契约）审阅并接受
+- [ ] protobuf（内部契约）审阅并接受
+- [ ] K8s 部署模板与资源清单（包含 GPU 池规则）审阅
+- [ ] 隐私/合规点确认（数据保存时长、删除策略）
 
+## Next Steps
+1. 若接受契约，我将基于这些接口实现 MVP-1（mock LLM/TTS + 前端 demo）。
+2. 编写 contract tests（OpenAPI validation + protobuf schema tests）。
+3. 添加 CI 作业，自动生成 SDK（OpenAPI / protobuf）并运行简单集成测试。
