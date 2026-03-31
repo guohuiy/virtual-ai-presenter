@@ -1,0 +1,55 @@
+{
+  "name": "virtual-ai-presenter",
+  "version": "1.0.0",
+  "description": "AI-powered 3D virtual human presenter with speech and podcast capabilities",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.164.1",
+    "@react-three/fiber": "^8.15.24",
+    "@react-three/drei": "^9.101.3",
+    "zustand": "^4.5.2",
+    "axios": "^1.6.7",
+    "lucide-react": "^0.309.0",
+    "@uiw/react-codemirror": "^4.21.21",
+    "@codemirror/lang-markdown": "^6.2.2",
+    "@codemirror/lang-javascript": "^6.2.1",
+    "react-hot-toast": "^2.4.1",
+    "react-markdown": "^9.0.1",
+    "remark-gfm": "^14.0.0",
+    "rehype-raw": "^7.0.0",
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@types/three": "^0.164.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  },
+  "keywords": [
+    "ai",
+    "3d",
+    "virtual-human",
+    "speech",
+    "presentation",
+    "podcast"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
