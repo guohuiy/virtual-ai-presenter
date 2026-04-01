@@ -1,0 +1,57 @@
+name: Build frontend
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd virtual-ai-presenter/frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd virtual-ai-presenter/frontend
+          npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: virtual-ai-presenter/frontend/dist
+
+  # Optional: deploy job template (disabled). To enable, add secrets and uncomment.
+  # deploy:
+  #   needs: build-frontend
+  #   runs-on: ubuntu-latest
+  #   if: ${{ secrets.DEPLOY_HOST }}
+  #   steps:
+  #     - name: Download build
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: frontend-dist
+  #         path: ./dist
+  #     - name: Deploy via SSH (example)
+  #       uses: appleboy/ssh-action@v0.1.6
+  #       with:
+  #         host: ${{ secrets.DEPLOY_HOST }}
+  #         username: ${{ secrets.DEPLOY_USER }}
+  #         key: ${{ secrets.DEPLOY_KEY }}
+  #         port: ${{ secrets.DEPLOY_PORT }}
+  #         script: |
+  #           mkdir -p ~/presenter-frontend
+  #           rm -rf ~/presenter-frontend/*
+  #           rsync -avz --delete ./dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/presenter-frontend/
+  #           pm2 reload ecosystem.config.prod.js --env production || pm2 start ecosystem.config.prod.js --env production
