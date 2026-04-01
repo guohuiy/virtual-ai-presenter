@@ -9,6 +9,8 @@ services:
       - tts
       - media
       - auth
+      - redis
+      - postgres
     environment:
       - LM_URL=http://lm:8501/generate
       - TTS_URL=http://tts:8601/synthesize
@@ -16,6 +18,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/presenter
       - AUTH_URL=http://auth:8801
+      - JWT_SECRET=supersecret_for_local_dev
   lm:
     build: ./virtual-ai-presenter/backend/lm_inference
     ports:
@@ -32,6 +35,9 @@ services:
     build: ./virtual-ai-presenter/backend/auth_service
     ports:
       - "8801:8801"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/presenter
+      - JWT_SECRET=supersecret_for_local_dev
   redis:
     image: redis:7
     ports:
