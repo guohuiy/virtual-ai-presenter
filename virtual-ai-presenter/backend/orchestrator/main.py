@@ -5,7 +5,7 @@ import uuid
 from typing import Dict, Any
 
 import httpx
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException
 from fastapi.responses import JSONResponse
 
 try:
@@ -18,6 +18,8 @@ try:
 except Exception:
     asyncpg = None
 
+import jwt
+
 app = FastAPI()
 
 # Simple in-memory session store as fallback
@@ -28,6 +30,9 @@ TTS_URL = os.environ.get('TTS_URL', 'http://localhost:8601/synthesize')
 MEDIA_URL = os.environ.get('MEDIA_URL', 'http://localhost:8701')
 REDIS_URL = os.environ.get('REDIS_URL')
 DATABASE_URL = os.environ.get('DATABASE_URL')
+AUTH_URL = os.environ.get('AUTH_URL')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'devsecret')
+JWT_ALGO = 'HS256'
 
 redis = None
 pg_pool = None
@@ -54,9 +59,26 @@ async def startup_event():
                 )
             ''')
 
+def verify_token(token: str) -> Dict[str, Any]:
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
+        return payload
+    except Exception:
+        return None
+
 @app.post('/session/start')
-async def start_session(payload: Dict[str, Any]):
-    user_id = payload.get('userId', 'anon')
+async def start_session(request: Request):
+    # Require Authorization: Bearer <token>
+    auth = request.headers.get('authorization')
+    if not auth or not auth.lower().startswith('bearer '):
+        raise HTTPException(status_code=401, detail='authorization required')
+    token = auth.split(' ', 1)[1]
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail='invalid token')
+
+    payload_json = await request.json()
+    user_id = payload_json.get('userId', payload.get('sub', 'anon'))
     session_id = str(uuid.uuid4())
     sessions[session_id] = {'user_id': user_id}
     if redis:
@@ -64,7 +86,7 @@ async def start_session(payload: Dict[str, Any]):
             await redis.hset(f'session:{session_id}', mapping={'user_id': user_id})
         except Exception:
             pass
-    ws_url = f"ws://localhost:8000/ws/{session_id}"
+    ws_url = f"ws://localhost:8000/ws/{session_id}?token={token}"
     return JSONResponse({'sessionId': session_id, 'websocketUrl': ws_url})
 
 @app.post('/session/{session_id}/submit')
@@ -97,6 +119,15 @@ async def control(session_id: str, payload: Dict[str, Any]):
 # Websocket endpoint to stream events to client
 @app.websocket('/ws/{session_id}')
 async def ws_endpoint(websocket: WebSocket, session_id: str):
+    # Expect token query param: ?token=...
+    token = websocket.query_params.get('token')
+    payload = None
+    if token:
+        payload = verify_token(token)
+    if not payload:
+        await websocket.close(code=1008)
+        return
+
     await websocket.accept()
     sessions.setdefault(session_id, {})['ws'] = websocket
     if redis:
