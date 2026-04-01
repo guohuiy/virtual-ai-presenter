@@ -1,10 +1,10 @@
 PM2 Service Management
 
-This project includes an `ecosystem.config.js` to manage backend microservices and the frontend dev server using PM2.
+This project includes an `ecosystem.config.js` to manage backend microservices and the frontend dev or production server using PM2.
 
 Prerequisites
-- Node.js and npm (for PM2). You can install pm2 globally: `npm install -g pm2`, or use the local devDependency.
-- Python 3.11+ and backend dependencies (if you prefer running directly without PM2 building containers).
+- Node.js and npm. Install pm2 globally: `npm install -g pm2`, or use the local devDependency.
+- For production hosting of frontend, this repo uses `serve` to serve `dist`.
 
 Install (local pm2):
 
@@ -14,17 +14,48 @@ npm install
 npm install -g pm2
 ```
 
-Start all services with PM2 (uses `ecosystem.config.js`):
+Start in development (runs Vite dev server for frontend):
 
 ```bash
 # using global pm2
 pm2 start ecosystem.config.js
-
 # or using local pm2 via npm script
 npm run pm2:start
 ```
 
-Common commands
+Start in production (build frontend and run production ecosystem):
+
+```bash
+# build frontend
+npm --prefix virtual-ai-presenter/frontend run build
+
+# load production env (from .env.production) and start
+export $(cat .env.production | xargs)  # Linux/macOS
+pm2 start ecosystem.config.prod.js --env production
+```
+
+Windows (PowerShell) equivalents
+
+```powershell
+# install dependencies
+npm install
+
+# build frontend
+npm --prefix virtual-ai-presenter/frontend run build
+
+# load env vars from .env.production into $env:
+Get-Content .env.production | ForEach-Object {
+  if ($_ -and ($_ -notmatch '^#')) {
+    $pair = $_ -split '='; $envName = $pair[0]; $envVal = $pair[1]; $env:$envName = $envVal
+  }
+}
+
+# start PM2 (assumes pm2 is installed globally)
+pm install -g pm2
+pm2 start ecosystem.config.prod.js --env production
+```
+
+Common PM2 commands
 
 - List processes:
   ```bash
@@ -34,11 +65,6 @@ Common commands
 - Stop a service:
   ```bash
   pm2 stop orchestrator
-  pm2 stop lm
-  pm2 stop tts
-  pm2 stop media
-  pm2 stop auth
-  pm2 stop frontend
   ```
 
 - Restart a service:
@@ -64,5 +90,5 @@ Common commands
 
 Notes
 - PM2 runs the Python scripts directly using the system `python` interpreter. Ensure your Python environment has required packages installed (see `virtual-ai-presenter/backend/requirements.txt`).
-- For production use consider running services inside containers (docker-compose) and using PM2 on a process manager host only if desired.
-- To run frontend in production, build it (`npm --prefix virtual-ai-presenter/frontend run build`) and update `ecosystem.config.js` to serve `dist` via a static server (e.g., `serve`).
+- Running backend services under PM2 is convenient for local development. For production consider containers and orchestrators like Kubernetes.
+- To run frontend in production, build it (`npm --prefix virtual-ai-presenter/frontend run build`) and use the production ecosystem which serves `dist` via `serve`.
