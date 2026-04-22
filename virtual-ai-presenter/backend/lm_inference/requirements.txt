@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+httpx[http2]
+aiofiles
+python-multipart
+asyncpg
+aioredis
+PyJWT
+passlib[bcrypt]
